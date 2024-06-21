@@ -22,7 +22,6 @@
 
 
 - [中文文档](https://learnku.com/docs/dcat-admin)
-- [Demo / 在线演示](http://103.39.211.179:8080/admin)
 - [Demo源码](https://github.com/jqhph/dcat-admin-demo)
 
 
