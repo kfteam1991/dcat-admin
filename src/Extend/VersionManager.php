@@ -204,6 +204,10 @@ class VersionManager
 
         $position = array_search($version, array_keys($versions));
 
+        if ($position === false) {
+            return $versions;
+        }
+
         return array_slice($versions, ++$position);
     }
 
