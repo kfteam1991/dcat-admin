@@ -31,7 +31,7 @@ class Admin
     use HasAssets;
     use HasHtml;
 
-    const VERSION = '2.2.2-beta';
+    const VERSION = '2.2.8';
 
     const SECTION = [
         // 往 <head> 标签内输入内容
@@ -72,7 +72,7 @@ class Admin
      */
     public static function longVersion()
     {
-        return sprintf('Dcat Admin <comment>version</comment> <info>%s</info>', static::VERSION);
+        return sprintf('Kfteam Admin <comment>version</comment> <info>%s</info>', static::VERSION);
     }
 
     /**
