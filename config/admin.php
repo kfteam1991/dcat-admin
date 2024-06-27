@@ -12,7 +12,7 @@ return [
     |
     */
     'name' => 'Dcat Admin',
-
+    'version' => '1.0',
     /*
     |--------------------------------------------------------------------------
     | dcat-admin logo
@@ -22,7 +22,7 @@ return [
     | `img` tag, eg '<img src="http://logo-url" alt="Admin logo">'.
     |
     */
-    'logo' => '<img src="/vendor/dcat-admin/images/logo.png" width="35"> &nbsp;Dcat Admin',
+    'logo' => '<img src="/vendor/dcat-admin/images/logo.png" width="35">',
 
     /*
     |--------------------------------------------------------------------------
