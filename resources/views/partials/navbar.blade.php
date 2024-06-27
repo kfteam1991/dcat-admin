@@ -30,7 +30,7 @@
                     <ul class="nav navbar-nav flex-row">
                         <li class="nav-item mr-auto">
                             <a href="{{ admin_url('/') }}" class="waves-effect waves-light">
-                                <span class="logo-lg">{!! config('admin.logo') !!}</span>
+                                <span class="logo-lg">{!! config('admin.logo').config('admin.name').config('admin.version') !!}</span>
                             </a>
                         </li>
                     </ul>
