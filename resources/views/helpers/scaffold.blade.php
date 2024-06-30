@@ -514,7 +514,7 @@
             $model.val(modelNamespace + ucfirst(ucfirst(toHump(toLine(val)))));
         }
         function witeRepository(val) {
-            $repository.val(repositoryNamespace + ucfirst(ucfirst(toHump(toLine(val)))))
+            $repository.val(repositoryNamespace + ucfirst(ucfirst(toHump(toLine(val)))) + 'Repository');
         }
 
         function getTR() {
