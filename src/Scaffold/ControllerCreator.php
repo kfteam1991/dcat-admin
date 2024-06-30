@@ -61,7 +61,7 @@ class ControllerCreator
 
         $slug = str_replace('Controller', '', class_basename($this->name));
 
-        $model = $model ?: 'App\Admin\Repositories\\'.$slug;
+        $model = $model ?: 'App\Admin\Repositories\\'.$slug.'Repository';
 
         $this->files->put($path, $this->replace($stub, $this->name, $model, $slug));
         $this->files->chmod($path, 0777);
