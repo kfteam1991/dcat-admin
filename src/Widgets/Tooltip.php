@@ -7,7 +7,7 @@ use Illuminate\Contracts\Support\Renderable;
 
 class Tooltip extends Widget
 {
-    protected static $style = '.tooltip-inner{padding:7px 13px;border-radius:2px;font-size:13px;max-width:250px}';
+    protected static $style = '.tooltip-inner{padding:7px 13px;border-radius:2px;font-size:13px;max-width:260px}';
 
     protected $selector;
 
@@ -15,7 +15,7 @@ class Tooltip extends Widget
 
     protected $background;
 
-    protected $maxWidth = 210;
+    protected $maxWidth = 260;
 
     protected $placement = 1;
 
