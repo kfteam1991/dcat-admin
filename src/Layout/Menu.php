@@ -80,12 +80,22 @@ class Menu
      */
     public function toHtml($nodes)
     {
-        $html = '';
+        $menus = Helper::buildNestedArray($nodes);
+        $menus = array_filter($menus, function ($item) {
+            return $this->visible($item);
+        });
+        // 对菜单进行键值排序
+        $menus = array_values($menus);
 
-        foreach (Helper::buildNestedArray($nodes) as $item) {
-            $html .= $this->render($item);
+        if (count($menus) == 1) {
+            $menus = $menus[0]['children'];
         }
 
+        $html = '';
+        
+        foreach ($menus as $item) {
+            $html .= $this->render($item);
+        }
         return $html;
     }
 
