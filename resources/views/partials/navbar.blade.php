@@ -21,12 +21,8 @@
             @endif
 
             <div class="navbar-collapse d-flex justify-content-between">
-                <div class="navbar-left d-flex align-items-center">
-                    {!! Dcat\Admin\Admin::navbar()->render('left') !!}
-                </div>
-
                 @if($configData['horizontal_menu'])
-                <div class="d-md-block horizontal-navbar-brand justify-content-center text-center">
+                <div class="d-md-block horizontal-navbar-brand justify-content-center text-center ml-1">
                     <ul class="nav navbar-nav flex-row">
                         <li class="nav-item mr-auto">
                             <a href="{{ admin_url('/') }}" class="waves-effect waves-light">
@@ -36,6 +32,10 @@
                     </ul>
                 </div>
                 @endif
+                <div class="navbar-left d-flex align-items-center">
+                    {!! Dcat\Admin\Admin::navbar()->render('left') !!}
+                </div>
+
 
                 <div class="navbar-right d-flex align-items-center">
                     {!! Dcat\Admin\Admin::navbar()->render() !!}
