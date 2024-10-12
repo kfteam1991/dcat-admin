@@ -21,7 +21,7 @@ class DarkModeSwitcher implements Renderable
         return <<<HTML
 <ul class="nav navbar-nav float-right">
     <li class="dropdown dropdown-user nav-item">
-        <a class="dropdown-toggle nav-link">
+        <a class="nav-link">
             <span class="dark-mode-switcher">
                 <i class="feather {$icon}"></i>
             </span>
