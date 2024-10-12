@@ -210,7 +210,7 @@ class AdminServiceProvider extends ServiceProvider
             }
 
             // Register menu
-            Admin::menu()->register();
+            // Admin::menu()->register();
         }, true);
     }
 
