@@ -55,6 +55,15 @@ class Menu
             $this->add(static::$helperNodes, 20);
         }
     }
+    /**
+     * 自定义 后加的  只显示debug的菜单
+     */
+    public function registerDebug()
+    {
+        if (config('app.debug') && config('admin.helpers.enable', true)) {
+            return $this->toHtml(static::$helperNodes, 20);
+        }
+    }
 
     /**
      * 增加菜单节点.
