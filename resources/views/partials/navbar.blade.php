@@ -1,7 +1,6 @@
-
 {!! admin_section(Dcat\Admin\Admin::SECTION['NAVBAR_BEFORE']) !!}
 
-<nav class="navbar-expand-lg navbar
+<nav class="{{ (Admin::user()->isAdministrator()) ? 'header-navbar' : '' }} navbar-expand-lg navbar
     navbar-with-menu {{ $configData['navbar_class'] }}
     {{ $configData['navbar_color'] }}
         navbar-light navbar-shadow " style="top: 0;">
