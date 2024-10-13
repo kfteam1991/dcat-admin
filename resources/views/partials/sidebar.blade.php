@@ -13,7 +13,6 @@
                     </li>
                 </ul>
             </div>
-            @endif
 
             <div class="p-0 {{ $configData['horizontal_menu'] ? 'pl-1 pr-1' : 'sidebar pb-3' }}">
                 <ul class="nav nav-pills nav-sidebar {{ $configData['horizontal_menu'] ? '' : 'flex-column' }}"
@@ -26,6 +25,7 @@
                     {!! admin_section(Dcat\Admin\Admin::SECTION['LEFT_SIDEBAR_MENU_BOTTOM']) !!}
                 </ul>
             </div>
+            @endif
         </aside>
     </div>
 </div>
