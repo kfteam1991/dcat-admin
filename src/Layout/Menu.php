@@ -55,15 +55,6 @@ class Menu
             $this->add(static::$helperNodes, 20);
         }
     }
-    /**
-     * 自定义 后加的  只显示debug的菜单
-     */
-    public function registerDebug()
-    {
-        if (config('app.debug') && config('admin.helpers.enable', true)) {
-            return $this->toHtml(static::$helperNodes, 20);
-        }
-    }
 
     /**
      * 增加菜单节点.
@@ -88,16 +79,18 @@ class Menu
      * @throws \Throwable
      */
     public function toHtml($nodes)
-    {
+    { 
         $menus = Helper::buildNestedArray($nodes);
-        $menus = array_filter($menus, function ($item) {
-            return $this->visible($item);
-        });
-        // 对菜单进行键值排序
-        $menus = array_values($menus);
-
-        if (count($menus) == 1) {
-            $menus = $menus[0]['children'];
+        if ($nodes[0]['title'] != 'Helpers') {
+            $menus = array_filter($menus, function ($item) {
+                return $this->visible($item);
+            });
+            // 对菜单进行键值排序
+            $menus = array_values($menus);
+    
+            if (count($menus) == 1) {
+                $menus = $menus[0]['children'];
+            }
         }
 
         $html = '';
