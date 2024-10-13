@@ -440,7 +440,9 @@ class Content implements Renderable
             config('admin.layout') ?: [],
             $this->config
         );
-
+        if (Admin::user() && Admin::user()->isAdministrator()) {
+            $data['horizontal_menu'] = false;
+        }
         $allOptions = [
             'theme'             => '',
             'footer_type'       => '',
