@@ -74,12 +74,17 @@ export default class Menu {
                 return;
             }
 
-            if (! defaultHorizontalMenuHeight) {
-                defaultHorizontalMenuHeight = $horizontalMenu.height()
+            if (!$horizontalMenu.length) {
+                return;
             }
-
-            if (! horizontalMenuTop) {
-                horizontalMenuTop = $horizontalMenu.offset().top + 15;
+        
+            if (!defaultHorizontalMenuHeight) {
+                defaultHorizontalMenuHeight = $horizontalMenu.height() || 0;
+            }
+        
+            if (!horizontalMenuTop) {
+                let offset = $horizontalMenu.offset();
+                horizontalMenuTop = offset ? offset.top + 15 : 0;
             }
 
             let height = $horizontalMenu.height(),
