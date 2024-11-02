@@ -4,6 +4,7 @@
 
 <script>
     var Dcat = CreateDcat({!! Dcat\Admin\Admin::jsVariables() !!});
+    var currentLoginUserId = {{ json_encode(Dcat\Admin\Admin::user()->id) }};
 </script>
 
 {!! admin_section(Dcat\Admin\Admin::SECTION['BODY_INNER_BEFORE']) !!}
