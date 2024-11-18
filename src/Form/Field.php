@@ -740,16 +740,19 @@ class Field implements Renderable
     /**
      * set the input filed required.
      *
+     * @param  bool  $isRequired
      * @param  bool  $isLabelAsterisked
      * @return $this
      */
-    public function required($isLabelAsterisked = true)
+    public function required($isRequired = true, $isLabelAsterisked = true)
     {
         if ($isLabelAsterisked) {
             $this->setLabelClass(['asterisk']);
         }
 
-        $this->rules('required');
+        if ($isRequired) {
+            $this->rules('required');
+        }
 
         return $this->attribute('required', true);
     }
