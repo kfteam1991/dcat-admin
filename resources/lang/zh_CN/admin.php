@@ -91,7 +91,7 @@ return [
     'back_to_list'          => '返回列表',
     'submit'                => '提交',
     'menu'                  => '菜单',
-    'input'                 => '输入',
+    'input'                 => '请输入',
     'succeeded'             => '成功',
     'failed'                => '失败',
     'delete_confirm'        => '确认删除?',
