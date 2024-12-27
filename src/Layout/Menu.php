@@ -12,7 +12,7 @@ class Menu
         [
             'id'        => 1,
             'title'     => 'Helpers',
-            'icon'      => 'fa fa-keyboard-o',
+            'icon'      => 'fa-regular fa-keyboard',
             'uri'       => '',
             'parent_id' => 0,
         ],
