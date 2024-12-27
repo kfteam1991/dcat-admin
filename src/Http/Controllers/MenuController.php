@@ -37,7 +37,7 @@ class MenuController extends AdminController
 
                     $form->select('parent_id', trans('admin.parent_id'))->options($menuModel::selectOptions());
                     $form->text('title', trans('admin.title'))->required();
-                    $form->icon('icon', trans('admin.icon'))->help($this->iconHelp());
+                    $form->text('icon', trans('admin.icon'))->help($this->iconHelp());
                     $form->text('uri', trans('admin.uri'));
 
                     if ($menuModel::withRole()) {
@@ -79,7 +79,8 @@ class MenuController extends AdminController
             });
 
             $tree->branch(function ($branch) {
-                $payload = "<i class='fa {$branch['icon']}'></i>&nbsp;<strong>{$branch['title']}</strong>";
+                $icon = $branch['icon'] ? : 'feather icon-circle';
+                $payload = "<i class='{$icon}'></i>&nbsp;<strong>{$branch['title']}</strong>";
 
                 if (! isset($branch['children'])) {
                     if (url()->isValidUrl($branch['uri'])) {
@@ -120,7 +121,7 @@ class MenuController extends AdminController
                 return (int) $v;
             });
             $form->text('title', trans('admin.title'))->required();
-            $form->icon('icon', trans('admin.icon'))->help($this->iconHelp());
+            $form->text('icon', trans('admin.icon'))->help($this->iconHelp());
             $form->text('uri', trans('admin.uri'));
             $form->switch('show', trans('admin.show'));
 
@@ -172,6 +173,6 @@ class MenuController extends AdminController
      */
     protected function iconHelp()
     {
-        return 'For more icons please see <a href="http://fontawesome.io/icons/" target="_blank">http://fontawesome.io/icons/</a>';
+        return 'For more icons please see <a href="https://fontawesome.com/icons" target="_blank">https://fontawesome.com/icons</a>';
     }
 }
