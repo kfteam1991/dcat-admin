@@ -999,4 +999,48 @@ class Helper
 
         return redirect($to, in_array($statusCode, $redirectCodes, true) ? $statusCode : 302);
     }
+        
+    /**
+     * 把图片压缩成webp
+     *
+     * @param [type] 输入图片地址
+     * @param [type] 输出图片地址
+     * @return void
+     */
+    public static function convertToWebP($inputFile, $outputFile)
+    {
+        try {
+            if(!file_exists($inputFile)){
+                return false;
+            }
+            // 创建 Imagick 对象
+            $imagick = new \Imagick($inputFile);
+
+            // 检查是否是 GIF 格式
+            if ($imagick->getImageFormat() === 'GIF') {
+                // 如果是 GIF，保留帧并生成动态 WebP
+                $imagick = $imagick->coalesceImages(); // 解开所有帧
+                $imagick->stripImage(); //去除元数据
+                foreach ($imagick as $frame) {
+                    $frame->setImageFormat('WEBP'); // 设置帧格式为 WebP
+                    $frame->setOption('webp:lossless', 'true'); // 可选：无损压缩
+                    $frame->setImageDelay($frame->getImageDelay()); // 保留原始延迟时间
+                }
+                $imagick = $imagick->deconstructImages(); // 压缩所有帧
+                $imagick->writeImages($outputFile, true); // 保存为动态 WebP
+            } else {
+                // 如果不是 GIF，则直接转换为静态 WebP
+                $imagick->setImageFormat('WEBP');
+                $imagick->setOption('webp:lossless', 'false'); // 可选：有损压缩
+                $imagick->writeImage($outputFile);
+            }
+
+            return true;
+            // echo "Conversion successful: {$outputFile}\n";
+
+        } catch (\Exception $e) {
+            echo "Error: " . $e->getMessage();
+            return false;
+        }
+    }
 }
