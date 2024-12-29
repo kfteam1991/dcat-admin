@@ -40,6 +40,9 @@
                             success: function (response) {
                                 // 删除成功后,从编辑器中移除图片
                                 editor.dom.remove(selectedNode);
+                                if (typeof imgCallback === 'function') {
+                                    imgCallback();
+                                }
                             },
                             error: function (xhr) {
                                 console.error('Error deleting image:', xhr);
@@ -57,7 +60,6 @@
                 $('.tox-button--secondary').on('click', function () {
                     // 触发删除图片逻辑
                     var url = $(this).closest('.tox-dialog__footer').prev().find('input[type="url"]').val();
-                    debugger;
                     // 存在路径  并且以 http 或者 https 开头，说明已经上传到服务器了，需要删除
                     if (url.length > 0 && (url.startsWith("https://") || url.startsWith("http://"))) {
                         deleteImage(url);
@@ -66,10 +68,10 @@
 
                 // 监听对话框右上角关闭叉号的点击事件
                 $('.tox-button--icon').not('.tox-browse-url').on('click', function () {
-                    debugger;
                     var url = $(this).closest('.tox-dialog__header').next().find('input[type="url"]').val();
+
                     // 存在路径  并且以 http 或者 https 开头，说明已经上传到服务器了，需要删除
-                    if (url.length > 0 && (url.startsWith("https://") || url.startsWith("http://"))) {
+                    if (url != undefined && url.length > 0 && (url.startsWith("https://") || url.startsWith("http://"))) {
                         deleteImage(url);
                     }
                 });
@@ -88,15 +90,28 @@
                     // 检查文件大小
                     if (file.size > fileSize) { // 设置最大文件大小为 2MB
                         e.preventDefault(); // 阻止默认粘贴行为
-                        alert(alertContent);
+                        alert(alertContent);//提示
                         return;
                     }
                 }
             }
         });
 
+
         //图片有新增、删除进行回调
         editor.on('init', function () {
+            let selectedImageSrc = null; // 记录选中的图片的 src
+
+            // 监听编辑器中的点击事件，检查是否选中图片
+            editor.on('click', function (e) {
+                const target = e.target;
+                if (target.nodeName === 'IMG') {
+                    selectedImageSrc = target.src; // 记录选中图片的 src
+                    console.log('Selected image src:', selectedImageSrc);
+                } else {
+                    selectedImageSrc = null; // 如果不是图片，清空记录
+                }
+            });
             // 获取编辑器内容区域
             const editorBody = editor.getBody();
 
@@ -109,7 +124,9 @@
                         mutation.addedNodes.forEach(node => {
                             if (node.nodeName === 'IMG' && !node.__imgAdded) {
                                 // 使用自定义属性标记此图片节点，防止重复添加
-                                node.__imgAdded = true;
+                                setTimeout(function() {//延迟设置属性   避免在调整图片大小时 分别调用  add 和 delete 方法
+                                        node.__imgAdded = true;
+                                }, 1000);
                                 console.log('Image added:', node.src);
                                 if (typeof imgCallback === 'function') {
                                     tinymce.triggerSave(); // 更新隐藏的 textarea 内容
@@ -124,6 +141,7 @@
                         mutation.removedNodes.forEach(node => {
                             if (node.nodeName === 'IMG' && node.__imgAdded) {
                                 console.log('Image removed:', node.src);
+                                deleteImage(node.src);
                                 if (typeof imgCallback === 'function') {
                                     tinymce.triggerSave(); // 更新隐藏的 textarea 内容
                                     setTimeout(function() {//延迟调用回调函数，避免加载不完
@@ -135,15 +153,23 @@
                         });
                     }
 
-                // 处理属性变动，只关注图片的 src 变化，排除宽高调整
-                // if (mutation.type === 'attributes' && mutation.target.nodeName === 'IMG') {
-                //     if (mutation.attributeName === 'src') {
-                //         console.log('Image source changed:', mutation.target.src);
-                //         if (typeof imgCallback === 'function') {
-                //             imgCallback();
-                //         }
-                //     }
-                // }
+                    //替换链接时 调用
+                    if (mutation.type === 'attributes' && mutation.target.nodeName === 'IMG' && mutation.attributeName === 'src' && selectedImageSrc && mutation.target.src !== selectedImageSrc) {
+                        const target = mutation.target;
+                        const newImageSrc = target.src; // 获取新的图片 src
+                        console.log('Image replaced:');
+                        console.log('Old src:', selectedImageSrc);
+                        console.log('New src:', newImageSrc);
+                        if(selectedImageSrc.endsWith('.webp') && newImageSrc.endsWith('.webp')){
+                            deleteImage(selectedImageSrc);
+                            if (typeof imgCallback === 'function') {
+                                imgCallback();
+                            }
+                            // 更新选中图片的 src
+                            selectedImageSrc = newImageSrc;
+                        }
+                    }
+
                 }
             });
 
@@ -185,7 +211,6 @@
             editor.on('Change', function(e) {
                 $this.val(String(e.target.getContent()).replace('<p><br data-mce-bogus="1"></p>', '').replace('<p><br></p>', ''));
             });
-           
         }
     }
 
@@ -200,7 +225,10 @@
             data: {
                 image: url,
                 _token: $('meta[name="csrf-token"]').attr('content')  // CSRF 令牌
-            }
+            },
+            success: function (response) {
+                console.log(response.message);
+            },
         });
     }
 </script>
