@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
+use Dcat\Admin\Support\Helper;
 
 trait UploadField
 {
@@ -202,10 +203,36 @@ trait UploadField
 
         $this->prepareFile($file);
 
-        if (! is_null($this->storagePermission)) {
-            $result = $this->getStorage()->putFileAs($this->getDirectory(), $file, $this->name, $this->storagePermission);
+        // if (! is_null($this->storagePermission)) {
+        //     $result = $this->getStorage()->putFileAs($this->getDirectory(), $file, $this->name, $this->storagePermission);
+        // } else {
+        //     $result = $this->getStorage()->putFileAs($this->getDirectory(), $file, $this->name);
+        // }
+
+        if ($this->isImage($file)) {//如果是图片 需要压缩
+            
+            if (! is_null($this->storagePermission)) {
+                $result = $this->getStorage()->putFileAs($this->getDirectory(), $file, $this->name, $this->storagePermission);
+            } else {
+                $result = $this->getStorage()->putFileAs($this->getDirectory(), $file, $this->name);
+            }
+            // 压缩图片并覆盖原始文件
+            $webpPath = $this->compressImage($result);
+            if ($webpPath) {
+                $diskRoot = Storage::disk('public')->path('');
+                $relativePath = str_replace($diskRoot, '', $webpPath);  
+                $path = $this->getDirectory() . '/' . Helper::basename($webpPath);
+                $url = $this->objectUrl($relativePath);
+                // 上传成功
+                return $this->responseUploaded($this->saveFullUrl ? $url : $path, $url);
+            }
         } else {
-            $result = $this->getStorage()->putFileAs($this->getDirectory(), $file, $this->name);
+            // 非图片文件直接存储
+            if (! is_null($this->storagePermission)) {
+                $result = $this->getStorage()->putFileAs($this->getDirectory(), $file, $this->name, $this->storagePermission);
+            } else {
+                $result = $this->getStorage()->putFileAs($this->getDirectory(), $file, $this->name);
+            }
         }
 
         if ($result) {
@@ -218,6 +245,24 @@ trait UploadField
 
         // 上传失败
         throw new UploadException(trans('admin.uploader.upload_failed'));
+    }
+
+    protected function isImage($file)
+    {
+        $mimeType = $file->getMimeType();
+        return str_starts_with($mimeType, 'image/');
+    }
+
+    //压缩图片
+    protected function compressImage($file)
+    {
+        $path = storage_path('app/public/' . $file);
+        $webpPath = preg_replace('/\.\w+$/', '.webp', $path);
+        Helper::convertToWebP($path, $webpPath);
+        @unlink($path);
+
+        return new \Illuminate\Http\File($webpPath);
+
     }
 
     public function remove()
@@ -493,3 +538,4 @@ trait UploadField
         return $this;
     }
 }
+
