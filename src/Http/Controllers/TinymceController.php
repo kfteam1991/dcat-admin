@@ -39,13 +39,8 @@ class TinymceController
             // 调用 convertToWebP 方法进行转换
             Helper::convertToWebP($file->getRealPath(), $webpPath);
 
-            // 将转换后的 WebP 文件存储到指定目录
-            // $disk->putFileAs($dir, new \Illuminate\Http\File($webpPath), $newName);
-            
             // 返回 WebP 文件的访问 URL
-            $absoluteUrl = $disk->url("{$dir}/$newName");
-            $relativeUrl = str_replace(url('/storage') . '/', '/storage/', $absoluteUrl);//相对路径
-            return ['location' => $relativeUrl];
+            return ['location' => $disk->url("{$dir}/$newName")];
         } else {
             // 如果不是图片，直接存储原文件
             $disk->putFileAs($dir, $file, $newName);
