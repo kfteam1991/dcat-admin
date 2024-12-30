@@ -30,21 +30,20 @@ class TinymceController
         $disk = $this->disk();
 
         // 生成新文件名（带扩展名）
-        $originalName = $this->generateNewName($file); 
-        $newName = pathinfo($originalName, PATHINFO_FILENAME) . '.webp'; // 将扩展名改为 webp
+        $newName = $this->generateNewName($file);
+        $disk->putFileAs($dir, $file, $newName);
         // 判断上传的文件是否为图片
         if (in_array($file->getClientOriginalExtension(), ['jpg', 'jpeg', 'png', 'gif'])) {
+            $newWebpName = pathinfo($newName, PATHINFO_FILENAME) . '.webp'; // 将扩展名改为 webp
             // 定义 WebP 输出路径
-            $webpPath = storage_path("app" . DIRECTORY_SEPARATOR . "public" . DIRECTORY_SEPARATOR . "{$dir}" . DIRECTORY_SEPARATOR . "{$newName}");
+            $webpPath = storage_path("app" . DIRECTORY_SEPARATOR . "public" . DIRECTORY_SEPARATOR . "{$dir}" . DIRECTORY_SEPARATOR . "{$newWebpName}");
             // 调用 convertToWebP 方法进行转换
             Helper::convertToWebP($file->getRealPath(), $webpPath);
-
+            // 删除原始文件
+            $disk->delete("{$dir}/$newName");
             // 返回 WebP 文件的访问 URL
-            return ['location' => $disk->url("{$dir}/$newName")];
+            return ['location' => $disk->url("{$dir}/$newWebpName")];
         } else {
-            // 如果不是图片，直接存储原文件
-            $disk->putFileAs($dir, $file, $newName);
-            
             // 返回原文件的访问 URL
             return ['location' => $disk->url("{$dir}/$newName")];
         }
