@@ -18,12 +18,9 @@
     var fileSize = {{env('UPLOAD_IMAGE_SIZE', 2 * 1024 * 1024)}}; //文件（图片）大小；
     var alertContent = '文件大小不能超过 ' + fileSize/1024/1024 + ' MB';
 
-    let uploadedImages = []; // 用于记录上传的图片 URL
-
     opts.selector = '#'+id;
     
     opts.setup = function (editor) {
-
 
          // 监听图片上传对话框的打开
         editor.on('OpenWindow', function (e) {
@@ -33,7 +30,7 @@
                     // 触发删除图片逻辑
                     var url = $(this).closest('.tox-dialog__footer').prev().find('input[type="url"]').val();
                     // 存在路径  并且以 http 或者 https 开头，说明已经上传到服务器了，需要删除
-                    if (url.length > 0 && (url.startsWith("https://") || url.startsWith("http://"))) {
+                    if (url.length > 0 && selectedImageSrc != url && (url.startsWith("https://") || url.startsWith("http://"))) {
                         deleteImage(url);
                     } 
                 });
@@ -41,9 +38,8 @@
                 // 监听对话框右上角关闭叉号的点击事件
                 $('.tox-button--icon').not('.tox-browse-url').on('click', function () {
                     var url = $(this).closest('.tox-dialog__header').next().find('input[type="url"]').val();
-
                     // 存在路径  并且以 http 或者 https 开头，说明已经上传到服务器了，需要删除
-                    if (url != undefined && url.length > 0 && (url.startsWith("https://") || url.startsWith("http://"))) {
+                    if (url != undefined && selectedImageSrc != url && url.length > 0 && (url.startsWith("https://") || url.startsWith("http://"))) {
                         deleteImage(url);
                     }
                 });
