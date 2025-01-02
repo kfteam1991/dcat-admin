@@ -11,7 +11,7 @@
         data-url="{!! $url !!}"
         data-refresh="{{ $refresh }}"
     >
-        <span class="ie-display">
+        <span class="ie-display {{ isset($ellipsis) ? 'ellipsis' : '' }}">
             {{ $display }}
             @if(! $display)
                 <i class="feather icon-edit-2"></i>
