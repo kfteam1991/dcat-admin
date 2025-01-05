@@ -21,8 +21,14 @@ class RoleController extends AdminController
     {
         return new Grid(new Role(), function (Grid $grid) {
             $grid->column('id', 'ID')->sortable();
-            $grid->column('slug')->label('primary');
+            // $grid->column('slug')->label('primary');
+            $grid->column('slug')->display(function ($slug) {
+                // 使用 color 字段的值作为背景颜色
+                $color = $this->color; 
+                return "<span class='label' style='background: {$color}; color: white;'>{$slug}</span>";
+            });
             $grid->column('name');
+            $grid->column('color');
 
             $grid->column('created_at');
             $grid->column('updated_at')->sortable();
@@ -47,6 +53,7 @@ class RoleController extends AdminController
             $show->field('id');
             $show->field('slug');
             $show->field('name');
+            $show->field('color');
 
             $show->field('permissions')->unescape()->as(function ($permission) {
                 $permissionModel = config('admin.database.permissions_model');
@@ -95,7 +102,7 @@ class RoleController extends AdminController
                 ->updateRules(['required', "unique:{$connection}.{$roleTable},slug,$id"]);
 
             $form->text('name', trans('admin.name'))->required();
-
+            $form->color('color')->required();
             $form->tree('permissions')
                 ->nodes(function () {
                     $permissionModel = config('admin.database.permissions_model');
