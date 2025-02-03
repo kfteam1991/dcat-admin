@@ -11,6 +11,9 @@
                     value="{{ $value }}"
                     auto="{{ $auto ? '1' : '0' }}"
             >
+            <span class="clear-input quick-search-clear" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;">
+                <i class="fa fa-times"></i>
+            </span>
         </label>
     </div>
 </form>
