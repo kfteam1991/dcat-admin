@@ -21,7 +21,6 @@
     opts.selector = '#'+id;
     
     opts.setup = function (editor) {
-
          // 监听图片上传对话框的打开
         editor.on('OpenWindow', function (e) {
             setTimeout(function() {
@@ -45,7 +44,6 @@
                 });
             }, 500); // 延迟一下，确保对话框的元素已经加载完成
         });
-
  
         //监听粘贴操作  限制粘贴图片大小
         editor.on('paste', function (e) {
@@ -81,8 +79,6 @@
             }
         });
 
-
-
         // 监听删除图片的操作
         editor.on('BeforeSetContent', function (e) {
             if (e.content.includes('<img')) {
@@ -93,55 +89,9 @@
             }
         });
 
-
         // 创建 MutationObserver 实例
         const observer = new MutationObserver(function (mutationsList) {
             for (let mutation of mutationsList) {
-                // 处理子节点的增加或删除
-                if (mutation.type === 'childList') {
-                    // 检查是否有图片新增
-                    mutation.addedNodes.forEach(node => {
-                        if (node.nodeName === 'IMG' && !node.__imgAdded) {
-                            // 使用自定义属性标记此图片节点，防止重复添加
-                            setTimeout(function() {//延迟设置属性   避免在调整图片大小时 分别调用  add 和 delete 方法
-                                node.__imgAdded = true;
-                            }, 1000);
-                        }
-                    });
-
-                    // 检查是否有 选中图片 删除
-                    mutation.removedNodes.forEach(node => {
-                        // if (node.nodeName === 'IMG') {
-                        if (node.nodeName === 'IMG' && node.__imgAdded) {
-                            console.log('Image removed xxxxx:', node.src,node.__imgAdded);
-                        
-                            editor.undoManager.clear(); // 清除历史记录
-                            
-                            deleteImage(node.src);
-                            if(node.src == selectedImageSrc){
-                                selectedImageSrc = null;
-                            }
-                            if (typeof imgCallback === 'function') {
-                                tinymce.triggerSave(); // 更新隐藏的 textarea 内容
-                                setTimeout(function() {//延迟调用回调函数，避免加载不完
-                                    imgCallback();
-                                }, 1000);
-                            }
-                        }
-                    });
-                }
-
-                    // 忽略调整大小，只处理 `src` 替换   这个不好用 不能获取实际链接
-                // if (mutation.type === 'attributes' && mutation.target.nodeName === 'IMG') {
-                //     if (mutation.attributeName === 'src') {
-                //         const oldSrc = mutation.oldValue;
-                //         const newSrc = mutation.target.src;
-                //         if (oldSrc !== newSrc) {
-                //             console.log('Image src replaced:', oldSrc, '→', newSrc);
-                //         }
-                //     }
-                // }
-
                 //替换链接时 调用
                 if (mutation.type === 'attributes' && mutation.target.nodeName === 'IMG' && mutation.attributeName === 'src' && selectedImageSrc && mutation.target.src !== selectedImageSrc) {
                     const target = mutation.target;
@@ -160,7 +110,6 @@
                         selectedImageSrc = newImageSrc;
                     }
                 }
-
             }
         });
 
@@ -176,8 +125,7 @@
                 attributeOldValue: true // 捕获旧值
             });
 
-
-              // 监听插入图片的操作   放到init中 目的要在初始化后生效
+            // 监听插入图片的操作   放到init中 目的要在初始化后生效
             editor.on('SetContent', function (e) {
                 if (e.content.includes('<img')) {
                     // 清空撤销历史，防止记录图片新增操作
@@ -194,49 +142,44 @@
                 }
             });
 
-                //监听节点有变化  在没有选中内容时 单独按删除按钮删除图片时
+            //监听节点有变化  在没有选中内容时 单独按删除按钮删除图片时
             editor.on('NodeChange', function (e) {
-                if (e.element.nodeName === 'IMG') {
-                    // 移除之前可能绑定的 keydown 事件，避免重复绑定
-                    editor.off('keydown').on('keydown', function (event) {
-                        if (event.key === 'Delete' || event.key === 'Backspace') {
-                            // event.stopPropagation(); // 阻止默认行为
-                            // event.preventDefault();
-                            const selectedNode = editor.selection.getNode();
-                            if (selectedNode.nodeName === 'IMG') {
+                // 移除之前可能绑定的 keydown 事件，避免重复绑定
+                editor.off('keydown').on('keydown', function (event) {
+                    if (event.key === 'Delete' || event.key === 'Backspace') {
+                        const selection = editor.selection.getContent(); // 获取选中的内容
+                        if(selection.length > 0){//选中删除
+                            // 创建一个临时 div 解析选中的 HTML 片段
+                            const tempDiv = document.createElement("div");
+                            tempDiv.innerHTML = selection;
+
+                            // 找到选中的图片
+                            const images = tempDiv.querySelectorAll("img");
+                            let deletedImages = [];
+                            
+                            images.forEach(img => {
                                 editor.undoManager.clear(); // 清除历史记录
-                                // imgNode.remove();
-                                // editor.dom.remove(imgNode);
-                                console.log('Deleted image src:', selectedNode.src); 
-                                deleteImage(selectedNode.src);
+                                console.log('Deleted image src: 节点监听  选中删除', img.src); 
+                                deleteImage(img.src);
+                            });
+                        }else{//如果没有选中则看看光标前后有无图片需要删除
+                            let selection = editor.selection;
+                            let rng = selection.getRng(); // 获取当前选区的 Range 对象
+                            let nodeBefore = rng.startContainer.childNodes[rng.startOffset - 1]; // 前一个节点
+                            let nodeAfter = rng.startContainer.childNodes[rng.startOffset]; // 后一个节点
+
+                            if (event.key === "Backspace" && nodeBefore && nodeBefore.nodeName === "IMG") {
+                                console.log("检测到 Backspace 删除了图片:", nodeBefore.src);
+                                deleteImage(nodeBefore.src);
+                            } else if (event.key === "Delete" && nodeAfter && nodeAfter.nodeName === "IMG") {
+                                console.log("检测到 Delete 删除了图片:", nodeAfter.src);
+                                deleteImage(nodeAfter.src);
                             }
                         }
-                    });
-                }
-            });
 
-            
-            //监听 划选批量删除
-            editor.on('keydown', function (e) {
-                // 检测按下的键是否是 Backspace 或 Delete
-                if (e.key === 'Backspace' || e.key === 'Delete') {
-                    const contentDocument = editor.getDoc(); // 获取编辑器文档对象
-                    const selection = contentDocument.getSelection(); // 获取用户当前选区
-                    const range = selection.getRangeAt(0); // 获取当前选区的 Range 对象
-                    // 检查选区是否包含图片节点
-                    const fragment = range.cloneContents(); // 克隆选区内容
-                    const images = fragment.querySelectorAll('img'); // 选区中的所有图片
-
-                    if (images.length > 0) {//划选中有图片删除
-                        images.forEach(image => {
-                            console.log('batch Deleted image src:', image.src); 
-                            // 在这里执行图片删除后的回调操作，例如清理服务器上的图片
-                            deleteImage(image.src);
-                        });
                     }
-                }
+                });
             });
-
     
         });
     };
@@ -265,6 +208,7 @@
             input.click();
         }
     };
+    
     if (! opts.init_instance_callback) {
         opts.init_instance_callback = function (editor) {
             editor.on('Change', function(e) {
@@ -274,6 +218,7 @@
     }
 
     tinymce.init(opts);
+
 
     //删除图片
     function deleteImage(url){
