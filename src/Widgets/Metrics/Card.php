@@ -394,9 +394,9 @@ class Card extends Widget
         $this->chartOptions['chart']['height'] = $this->chartHeight;
 
         // 颜色
-        if (empty($this->chartOptions['colors'])) {
-            $this->chartOptions['colors'] = (array) Admin::color()->get($this->style);
-        }
+        // if (empty($this->chartOptions['colors'])) {
+        //     $this->chartOptions['colors'] = (array) Admin::color()->get($this->style);
+        // }
 
         // 图表配置选项
         $chart->options($this->chartOptions);
