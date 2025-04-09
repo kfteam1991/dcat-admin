@@ -59,7 +59,9 @@ JS;
                     </div>
                 </li>
                 <li class="dropdown-divider"></li>
-                {$this->renderOptions($value)}
+                <div style="max-height:550px;overflow:auto">
+                    {$this->renderOptions($value)}
+                </div>
             </ul>
         </li>
         {$this->renderFormButtons()}
