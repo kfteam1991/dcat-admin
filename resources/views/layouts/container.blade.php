@@ -22,7 +22,7 @@
 
 <footer class="main-footer pt-1">
     <p class="clearfix blue-grey lighten-2 mb-0 text-center">
-        <button class="btn btn-primary btn-icon scroll-top pull-right" style="position: fixed;bottom: 2%; right: 10px;display: none">
+        <button class="btn btn-primary btn-icon scroll-top pull-right" style="position: fixed;bottom: 90px; right: 10px;display: none">
             <i class="feather icon-arrow-up"></i>
         </button>
     </p>
@@ -37,3 +37,4 @@
 </body>
 
 </html>
+
