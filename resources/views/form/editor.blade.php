@@ -208,6 +208,36 @@
             input.click();
         }
     };
+
+    //粘贴时处理
+    opts.paste_postprocess = function(plugin, args) {
+         // 清理表格里粘贴带来的 width/style，避免列宽被锁死
+        args.node.querySelectorAll('table').forEach(t => {
+            t.removeAttribute('style');
+            t.querySelectorAll('td,th').forEach(cell => {
+                cell.removeAttribute('width');
+                cell.removeAttribute('style');
+            });
+        });
+
+        // 处理长链接文本：只改显示文本，不改 href
+        args.node.querySelectorAll('a').forEach(a => {
+             // 如果 a 标签的祖先中有 table，才处理
+            if (a.closest('table')) {
+                const t = a.textContent || '';
+                if (t.length > 40) {
+                    let softened = t
+                    .replace(/([/.:?&=#_-])/g, '$1\u200b')   // 分隔符后可断
+                    .replace(/(\w{40})/g, '$1\u200b');       // 连续40字符强插软断点
+                    a.textContent = softened;
+                    a.style.whiteSpace = 'normal';
+                    a.style.overflowWrap = 'anywhere';
+                    a.style.wordBreak = 'break-all';
+                }
+            }
+        });
+    }
+
     
     if (! opts.init_instance_callback) {
         opts.init_instance_callback = function (editor) {
