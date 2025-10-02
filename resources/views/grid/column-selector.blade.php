@@ -3,7 +3,7 @@
         <i class="fa fa-table"></i>
         <span class="caret"></span>
     </button>
-    <ul class="dropdown-menu" role="menu" style="min-width: 130px">
+    <ul class="dropdown-menu" role="menu" style="min-width: 150px">
         <li class="dropdown-item">
             <ul class="selectors">
                 {!! $selectAll !!}
@@ -52,3 +52,4 @@
         submit($(this));
     });
 </script>
+
