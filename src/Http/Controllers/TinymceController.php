@@ -38,11 +38,18 @@ class TinymceController
             // 定义 WebP 输出路径
             $webpPath = storage_path("app" . DIRECTORY_SEPARATOR . "public" . DIRECTORY_SEPARATOR . "{$dir}" . DIRECTORY_SEPARATOR . "{$newWebpName}");
             // 调用 convertToWebP 方法进行转换
-            Helper::convertToWebP($file->getRealPath(), $webpPath);
-            // 删除原始文件
-            $disk->delete("{$dir}/$newName");
-            // 返回 WebP 文件的访问 URL
-            return ['location' => $disk->url("{$dir}/$newWebpName")];
+            $converted = Helper::convertToWebP($file->getRealPath(), $webpPath);
+
+            if ($converted && file_exists($webpPath)) {
+                // 转换成功，删除原始文件
+                $disk->delete("{$dir}/$newName");
+                // 返回 WebP 文件的访问 URL
+                return ['location' => $disk->url("{$dir}/$newWebpName")];
+            } else {
+                // 转换失败（如 Imagick 内存不足或扩展异常），保留原文件
+                return ['location' => $disk->url("{$dir}/$newName")];
+            }
+         
         } else {
             // 返回原文件的访问 URL
             return ['location' => $disk->url("{$dir}/$newName")];
