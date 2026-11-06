@@ -33,46 +33,32 @@ class TinymceController
         $newName = $this->generateNewName($file);
         $disk->putFileAs($dir, $file, $newName);
         // 判断上传的文件是否为图片
-        if (in_array($file->getClientOriginalExtension(), ['jpg', 'jpeg', 'png', 'gif'])) {
+        if (in_array(strtolower($file->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'gif'])) {
             $newWebpName = pathinfo($newName, PATHINFO_FILENAME) . '.webp'; // 将扩展名改为 webp
-            // 定义 WebP 输出路径
-            $webpPath = storage_path("app" . DIRECTORY_SEPARATOR . "public" . DIRECTORY_SEPARATOR . "{$dir}" . DIRECTORY_SEPARATOR . "{$newWebpName}");
+            // 使用正斜杠统一路径，避免 Windows DIRECTORY_SEPARATOR 导致 file_exists 判断失败
+            $webpPath = storage_path('app/public/' . $dir . '/' . $newWebpName);
             // 调用 convertToWebP 方法进行转换
             $converted = Helper::convertToWebP($file->getRealPath(), $webpPath);
 
-            if ($converted && file_exists($webpPath)) {
-                // 转换成功，删除原始文件
+            // 【竞态修复】必须先确认 WebP 文件真实存在且大小 > 0，再删除原始文件。
+            // 原来的写法是先删原文件再判断 WebP 是否生成成功，若转换中途异常
+            // （Imagick 内存不足、磁盘写入失败等），原文件已删且 WebP 未生成，图片永久丢失。
+            if ($converted && file_exists($webpPath) && filesize($webpPath) > 0) {
+                // WebP 确认存在且有内容后，再安全删除原始文件
                 $disk->delete("{$dir}/$newName");
                 // 返回 WebP 文件的访问 URL
                 return ['location' => $disk->url("{$dir}/$newWebpName")];
             } else {
-                // 转换失败（如 Imagick 内存不足或扩展异常），保留原文件
+                // 转换失败或 WebP 文件无效，保留原文件，清理可能存在的不完整 WebP
+                if (file_exists($webpPath) && filesize($webpPath) === 0) {
+                    @unlink($webpPath); // 清理 0 字节的无效 WebP 文件
+                }
                 return ['location' => $disk->url("{$dir}/$newName")];
             }
-         
         } else {
             // 返回原文件的访问 URL
             return ['location' => $disk->url("{$dir}/$newName")];
         }
-    }
-
-    /**
-     * 删除图片
-     *
-     * @return void
-     */
-    public function delete(Request $request)
-    {
-        $imagePath = urldecode($request->input('image'));//路径解码
-        // 提取相对路径
-        $imagePath = str_replace(url('storage/'), '', $imagePath); 
-        // 删除图片逻辑
-        if (Storage::disk('public')->exists($imagePath)) {
-            $result = Storage::disk('public')->delete($imagePath);
-            return response()->json(['success' =>  $result, 'message' => 'Image deleted successfully.']);
-        }
-    
-        return response()->json(['success' => false, 'message' => 'Image not found.' . $imagePath], 404);
     }
 
     protected function generateNewName(UploadedFile $file)
