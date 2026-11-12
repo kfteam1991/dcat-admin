@@ -40,16 +40,21 @@ class RenderableController
 
     protected function initTranslation(Request $request)
     {
-        if ($path = $request->get('_trans_')) {
+        if (($path = $request->input('_trans_')) && is_string($path)) {
             Admin::translation($path);
         }
     }
 
     protected function newRenderable(Request $request): LazyRenderable
     {
-        $class = $request->get('renderable');
+        $class = $request->input('renderable');
 
-        $class = str_replace('_', '\\', $class);
+        $class = is_string($class) ? str_replace('_', '\\', $class) : '';
+
+        // 先校验类型再实例化，防止通过请求参数实例化任意类
+        if ($class === '' || ! class_exists($class) || ! is_subclass_of($class, LazyRenderable::class)) {
+            abort(404, 'Renderable does not exist.');
+        }
 
         $renderable = new $class();
 

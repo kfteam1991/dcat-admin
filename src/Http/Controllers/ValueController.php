@@ -2,6 +2,7 @@
 
 namespace Dcat\Admin\Http\Controllers;
 
+use Dcat\Admin\Traits\InteractsWithApi;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -38,12 +39,15 @@ class ValueController
      */
     protected function resolve(Request $request)
     {
-        if (! $key = $request->get('_key')) {
+        $key = $request->input('_key');
+
+        if (! $key || ! is_string($key)) {
             throw new Exception('Invalid request.');
         }
 
-        if (! class_exists($key)) {
-            throw new Exception("Class [{$key}] does not exist.");
+        // 先校验类型再实例化，防止通过请求参数实例化任意类
+        if (! class_exists($key) || ! in_array(InteractsWithApi::class, class_uses_recursive($key), true)) {
+            throw new Exception('Class does not exist.');
         }
 
         $instance = app($key);

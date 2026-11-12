@@ -17,7 +17,7 @@ class HandleActionController
     {
         $action = $this->resolveActionInstance($request);
 
-        $action->setKey($request->get('_key'));
+        $action->setKey($request->input('_key'));
 
         if (! $action->passesAuthorization()) {
             $response = $action->failedAuthorization();
@@ -40,10 +40,12 @@ class HandleActionController
             throw new AdminException('Invalid action request.');
         }
 
-        $actionClass = str_replace('_', '\\', $request->get('_action'));
+        $actionClass = $request->input('_action');
+        $actionClass = is_string($actionClass) ? str_replace('_', '\\', $actionClass) : '';
 
-        if (! class_exists($actionClass)) {
-            throw new AdminException("Action [{$actionClass}] does not exist.");
+        // 先校验类型再实例化，防止通过请求参数实例化任意类
+        if ($actionClass === '' || ! class_exists($actionClass) || ! is_subclass_of($actionClass, Action::class)) {
+            throw new AdminException('Action does not exist.');
         }
 
         /** @var Action $action */
