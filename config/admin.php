@@ -270,6 +270,13 @@ return [
             'file'  => 'files',
         ],
 
+        // File extensions that are never allowed to be uploaded. Defaults to
+        // Dcat\Admin\Support\Helper::$forbiddenUploadExtensions (php, phtml, phar, html, svg ...).
+        // 'forbidden_extensions' => [],
+
+        // Disks that editor (tinymce / editor.md) uploads may choose via request. null = any disk defined in filesystems.php.
+        // 'allowed_disks' => ['public'],
+
     ],
 
     /*

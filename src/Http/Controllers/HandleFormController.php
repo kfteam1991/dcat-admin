@@ -7,6 +7,7 @@ use Dcat\Admin\Form\Field\Embeds;
 use Dcat\Admin\Form\Field\File;
 use Dcat\Admin\Form\Field\HasMany;
 use Dcat\Admin\Http\JsonResponse;
+use Dcat\Admin\Support\Helper;
 use Dcat\Admin\Traits\HasUploadedFile;
 use Dcat\Admin\Widgets\Form;
 use Illuminate\Http\Request;
@@ -80,9 +81,46 @@ class HandleFormController
 
         $field = $this->getField($request, $form);
 
-        $field->deleteFile($request->key);
+        if (! $field instanceof File) {
+            throw new AdminException('Invalid upload field.');
+        }
+
+        $paths = array_filter((array) $request->input('key'), 'is_string');
+
+        // 只允许删除该字段上传目录下的文件，防止任意文件删除
+        foreach ($paths as $path) {
+            if (! $this->isDeletablePath($field, $path)) {
+                return $this->responseErrorMessage('Invalid file path.');
+            }
+        }
+
+        $field->deleteFile($paths);
 
         return $this->responseDeleted();
+    }
+
+    /**
+     * @param  File  $field
+     * @param  string  $path
+     * @return bool
+     */
+    protected function isDeletablePath(File $field, string $path)
+    {
+        $prefix = $field->getStorage()->url('');
+
+        if ($prefix && strpos($path, $prefix) === 0) {
+            $path = substr($path, strlen($prefix));
+        }
+
+        $path = ltrim(str_replace('\\', '/', $path), '/');
+
+        if (! Helper::isSafeStoragePath($path)) {
+            return false;
+        }
+
+        $directory = trim(str_replace('\\', '/', (string) $field->getDirectory()), '/');
+
+        return $directory === '' || strpos($path, $directory.'/') === 0;
     }
 
     /**
@@ -97,10 +135,11 @@ class HandleFormController
             throw new AdminException('Invalid form request.');
         }
 
-        $formClass = $request->get(Form::REQUEST_NAME);
+        $formClass = $request->input(Form::REQUEST_NAME);
 
-        if (! class_exists($formClass)) {
-            throw new AdminException("Form [{$formClass}] does not exist.");
+        // 先校验类型再实例化，防止通过请求参数实例化任意类
+        if (! is_string($formClass) || ! class_exists($formClass) || ! is_subclass_of($formClass, Form::class)) {
+            throw new AdminException('Form does not exist.');
         }
 
         /** @var Form $form */

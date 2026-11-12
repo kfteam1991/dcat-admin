@@ -19,6 +19,11 @@ class WebUploader
 {
     const FILE_NAME = '_file_';
 
+    /**
+     * 允许的最大分块数量.
+     */
+    const MAX_CHUNKS = 10000;
+
     // 显式声明属性：PHP 8.2+ 已弃用动态属性
     public $_id;
 
@@ -40,10 +45,19 @@ class WebUploader
     {
         $request = $this->prepareRequest($request ?: request());
 
-        $this->_id = $request->get('_id');
-        $this->chunk = $request->get('chunk');
-        $this->chunks = $request->get('chunks');
-        $this->upload_column = $request->get('upload_column');
+        // _id 会被拼接为临时目录名，chunk 会被拼接进分块文件名，必须严格校验，防止目录穿越
+        $id = $request->input('_id');
+        $this->_id = (is_string($id) && preg_match('/^[\w\-][\w\-.]{0,190}$/', $id) && strpos($id, '..') === false)
+            ? $id
+            : null;
+
+        $chunk = $request->input('chunk');
+        $chunks = $request->input('chunks');
+        $this->chunk = is_numeric($chunk) ? max(0, (int) $chunk) : null;
+        $this->chunks = is_numeric($chunks) ? min(max(0, (int) $chunks), static::MAX_CHUNKS) : null;
+
+        $column = $request->input('upload_column');
+        $this->upload_column = is_string($column) ? $column : null;
         $this->file = $request->file(static::FILE_NAME);
     }
 
@@ -141,6 +155,10 @@ class WebUploader
      */
     protected function mergeChunks(UploadedFile $file)
     {
+        if (! $this->_id || $this->chunk === null || $this->chunk >= $this->chunks) {
+            return false;
+        }
+
         $tmpDir = $this->getTemporaryPath($this->_id);
         $newFilename = $this->generateChunkFileName($file);
 

@@ -195,6 +195,15 @@ trait UploadField
 
         $this->name = $this->getStoreName($file);
 
+        // 禁止上传可执行脚本等危险文件（php/phtml/phar/html/svg ...），可通过 admin.upload.forbidden_extensions 配置
+        if (Helper::isForbiddenUploadExtension($file->getClientOriginalName())
+            || Helper::isForbiddenUploadExtension($this->name)
+            || ! Helper::isSafeStoragePath($this->name)
+            || strpos(str_replace('\\', '/', $this->name), '/') !== false
+        ) {
+            return $this->responseErrorMessage(trans('admin.uploader.Q_TYPE_DENIED'));
+        }
+
         if ($this->options['override']) {
             $this->remove();
         }

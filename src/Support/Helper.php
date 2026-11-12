@@ -280,9 +280,11 @@ class Helper
             return $path === $current;
         }
 
-        $path = str_replace(['*', '/'], ['([0-9a-z-_,])*', "\/"], $path);
+        // 转义正则特殊字符并锚定开头：原先未锚定的正则只要“包含”即匹配，
+        // 例如权限 "users*" 会放行 "auth/users/1/edit"，导致越权
+        $pattern = str_replace('\*', '([0-9a-z-_,])*', preg_quote(ltrim($path, '/'), '/'));
 
-        return preg_match("/$path/i", $current);
+        return (bool) preg_match("/^{$pattern}/i", ltrim((string) $current, '/'));
     }
 
     /**
@@ -992,7 +994,7 @@ class Helper
         }
 
         if ($request->pjax()) {
-            return response("<script>location.href = '{$to}';</script>");
+            return response('<script>location.href = '.static::jsString($to).';</script>');
         }
 
         $redirectCodes = [201, 301, 302, 303, 307, 308];
@@ -1005,12 +1007,12 @@ class Helper
      *
      * @param [type] 输入图片地址
      * @param [type] 输出图片地址
-     * @return void
+     * @return bool
      */
     public static function convertToWebP($inputFile, $outputFile)
     {
         try {
-            if(!file_exists($inputFile)){
+            if (! class_exists(\Imagick::class) || ! is_file($inputFile)) {
                 return false;
             }
             // 创建 Imagick 对象
@@ -1038,9 +1040,207 @@ class Helper
             return true;
             // echo "Conversion successful: {$outputFile}\n";
 
-        } catch (\Exception $e) {
-            echo "Error: " . $e->getMessage();
+        } catch (\Throwable $e) {
+            // 不要 echo 异常信息：既会泄露服务器路径，也会破坏 JSON 响应
+            if (function_exists('report')) {
+                report($e);
+            }
+
             return false;
         }
+    }
+
+    /**
+     * 将字符串编码为可安全嵌入 <script> 的 JS 字符串字面量.
+     *
+     * @param  string  $value
+     * @return string
+     */
+    public static function jsString($value)
+    {
+        return json_encode(
+            (string) $value,
+            JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+    }
+
+    /**
+     * 默认禁止上传的文件后缀（可执行脚本 / 服务器配置 / 可被浏览器执行的文档）.
+     * 可通过配置 admin.upload.forbidden_extensions 覆盖.
+     *
+     * @var array
+     */
+    public static $forbiddenUploadExtensions = [
+        'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'pht', 'phtml', 'phar', 'phps', 'pgif', 'inc',
+        'shtml', 'shtm', 'stm', 'htaccess', 'htpasswd', 'ini', 'user.ini',
+        'cgi', 'pl', 'py', 'pyc', 'rb', 'sh', 'bash', 'asp', 'aspx', 'asa', 'asax', 'ascx', 'ashx', 'asmx', 'cer',
+        'jsp', 'jspx', 'jsw', 'jsv', 'jspf', 'war', 'exe', 'com', 'bat', 'cmd', 'dll', 'msi', 'vbs', 'ps1',
+        'html', 'htm', 'xhtml', 'xht', 'svg', 'svgz', 'xml', 'xsl', 'swf', 'hta',
+    ];
+
+    /**
+     * 编辑器图片上传允许的后缀.
+     *
+     * @var array
+     */
+    public static $imageUploadExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+
+    /**
+     * 判断上传文件后缀是否被禁止.
+     *
+     * @param  string|null  $filename  文件名或后缀
+     * @return bool
+     */
+    public static function isForbiddenUploadExtension($filename)
+    {
+        $filename = strtolower(trim((string) $filename));
+
+        if ($filename === '') {
+            return false;
+        }
+
+        $forbidden = array_map('strtolower', (array) config('admin.upload.forbidden_extensions', static::$forbiddenUploadExtensions));
+
+        // 去掉结尾的点和空白，防止 shell.php. / "shell.php " 绕过（Windows 会自动去掉）
+        $parts = explode('.', rtrim($filename, ". \t\n\r\0\x0B"));
+        $last = end($parts);
+
+        if (in_array($last, $forbidden, true)) {
+            return true;
+        }
+
+        // .user.ini / .htaccess 等
+        if (count($parts) === 3 && $parts[0] === '' && in_array($parts[1].'.'.$parts[2], $forbidden, true)) {
+            return true;
+        }
+
+        // 中间段为服务端脚本后缀时同样拒绝，防止 Apache 多后缀解析：shell.php.xxx
+        array_shift($parts);
+        array_pop($parts);
+
+        foreach ($parts as $part) {
+            if (preg_match('/^(php\d?|pht|phtml|phar|phps|shtml?|cgi|pl|py|asp|aspx|jsp|jspx)$/', $part)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 校验上传文件是否为真实图片（后缀白名单 + 文件内容 MIME 检测）.
+     *
+     * @param  \Symfony\Component\HttpFoundation\File\UploadedFile|null  $file
+     * @return bool
+     */
+    public static function isSafeImageUpload($file)
+    {
+        if (! $file instanceof \Symfony\Component\HttpFoundation\File\UploadedFile || ! $file->isValid()) {
+            return false;
+        }
+
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        if (! in_array($extension, static::$imageUploadExtensions, true)) {
+            return false;
+        }
+
+        if (static::isForbiddenUploadExtension($file->getClientOriginalName())) {
+            return false;
+        }
+
+        // getMimeType() 基于文件内容（finfo）检测，而不是客户端提交的 Content-Type
+        $mime = (string) $file->getMimeType();
+
+        return Str::startsWith($mime, 'image/') && $mime !== 'image/svg+xml';
+    }
+
+    /**
+     * 过滤上传目录，防止目录穿越.
+     *
+     * @param  string|null  $directory
+     * @return string
+     *
+     * @throws \InvalidArgumentException
+     */
+    public static function sanitizeUploadDirectory($directory)
+    {
+        $directory = trim(str_replace('\\', '/', (string) $directory), '/');
+
+        if ($directory === '') {
+            return '';
+        }
+
+        foreach (explode('/', $directory) as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..' || ! preg_match('/^[\w\-.]+$/u', $segment)) {
+                throw new \InvalidArgumentException('Invalid upload directory.');
+            }
+        }
+
+        return $directory;
+    }
+
+    /**
+     * 判断跳转地址是否安全：仅允许站内相对路径，或与当前站点 / app.url / admin 域名同主机的 http(s) 地址.
+     * 用于防止开放重定向以及 javascript: 伪协议 XSS.
+     *
+     * @param  mixed  $url
+     * @return bool
+     */
+    public static function isSafeRedirectUrl($url)
+    {
+        if (! is_string($url) || ($url = trim($url)) === '') {
+            return false;
+        }
+
+        // 控制字符、协议相对地址（//evil.com、/\evil.com）
+        if (preg_match('/[\x00-\x1F\x7F]/', $url) || preg_match('#^[/\\\\]{2}#', $url) || preg_match('#^/\\\\#', $url)) {
+            return false;
+        }
+
+        $parts = parse_url($url);
+
+        if ($parts === false) {
+            return false;
+        }
+
+        if (empty($parts['scheme']) && empty($parts['host'])) {
+            // 相对路径，但不能是 "javascript:xxx" 这类没有被解析出 scheme 的写法
+            return ! preg_match('/^[a-z][a-z0-9+.\-]*:/i', $url);
+        }
+
+        if (empty($parts['host']) || ! in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)) {
+            return false;
+        }
+
+        $hosts = array_filter(array_map('strtolower', array_merge(
+            [request()->getHost(), (string) parse_url((string) config('app.url'), PHP_URL_HOST), (string) config('admin.route.domain')],
+            (array) config('admin.redirect_hosts', [])
+        )));
+
+        return in_array(strtolower($parts['host']), $hosts, true);
+    }
+
+    /**
+     * 判断磁盘内的相对路径是否安全（不含目录穿越、空字节等）.
+     *
+     * @param  string|null  $path
+     * @return bool
+     */
+    public static function isSafeStoragePath($path)
+    {
+        $path = str_replace('\\', '/', (string) $path);
+
+        if ($path === '' || strpos($path, "\0") !== false || preg_match('#^[a-z][a-z0-9+.\-]*:#i', $path)) {
+            return false;
+        }
+
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '..') {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
