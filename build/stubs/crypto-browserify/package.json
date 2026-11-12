@@ -1,0 +1,1 @@
+{"name":"crypto-browserify","version":"3.12.99","main":"index.js","license":"MIT","description":"Empty stub: dcat-admin assets do not use Node crypto in the browser; avoids pulling the unmaintained elliptic package."}
