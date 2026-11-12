@@ -54,7 +54,7 @@ class DialogTable extends Widget
      */
     protected $events = ['shown' => null, 'hidden' => null, 'load' => null];
 
-    public function __construct($title = null, LazyRenderable $table = null)
+    public function __construct($title = null, ?LazyRenderable $table = null)
     {
         if ($title instanceof LazyRenderable) {
             $table = $title;

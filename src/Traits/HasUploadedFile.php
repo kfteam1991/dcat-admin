@@ -37,7 +37,7 @@ trait HasUploadedFile
      * @param  string|null  $disk
      * @return \Illuminate\Contracts\Filesystem\Filesystem|FilesystemAdapter
      */
-    public function disk(string $disk = null)
+    public function disk(?string $disk = null)
     {
         return Storage::disk($disk ?: config('admin.upload.disk'));
     }

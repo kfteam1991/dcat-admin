@@ -355,7 +355,7 @@ class Filter implements Renderable
      * @param  string|null  $mode
      * @return $this|string
      */
-    public function mode(string $mode = null)
+    public function mode(?string $mode = null)
     {
         if ($mode === null) {
             return $this->mode;

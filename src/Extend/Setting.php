@@ -16,7 +16,7 @@ abstract class Setting extends Form implements LazyRenderable
      */
     protected $extension;
 
-    public function __construct(ServiceProvider $extension = null)
+    public function __construct(?ServiceProvider $extension = null)
     {
         parent::__construct();
 

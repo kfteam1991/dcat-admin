@@ -48,7 +48,7 @@ class Condition
         return $this;
     }
 
-    public function else(\Closure $next = null)
+    public function else(?\Closure $next = null)
     {
         $self = $this;
 

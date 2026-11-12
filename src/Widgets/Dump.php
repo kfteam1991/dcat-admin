@@ -24,7 +24,7 @@ class Dump extends Widget
      * @param  array|object|string  $content
      * @param  string|null  $padding
      */
-    public function __construct($content, string $padding = null)
+    public function __construct($content, ?string $padding = null)
     {
         $this->content($content);
         $this->padding($padding);

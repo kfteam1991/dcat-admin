@@ -112,6 +112,11 @@ class Model
     protected $grid;
 
     /**
+     * @var mixed
+     */
+    protected $model;
+
+    /**
      * @var Relation
      */
     protected $relation;
@@ -211,7 +216,7 @@ class Model
      * @param  Collection|array  $data
      * @return LengthAwarePaginator|Paginator
      */
-    public function makePaginator($total, $data, string $url = null)
+    public function makePaginator($total, $data, ?string $url = null)
     {
         if ($this->simple) {
             $paginator = new Paginator($data, $this->getPerPage(), $this->getCurrentPage());

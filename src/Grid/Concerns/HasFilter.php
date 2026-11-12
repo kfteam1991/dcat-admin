@@ -51,7 +51,7 @@ trait HasFilter
      * @param  Closure  $callback
      * @return $this|Grid\Filter
      */
-    public function filter(Closure $callback = null)
+    public function filter(?Closure $callback = null)
     {
         if ($callback === null) {
             return $this->filter;

@@ -20,6 +20,11 @@ abstract class AbstractExporter implements ExporterInterface
     protected $grid;
 
     /**
+     * @var \Illuminate\Support\Collection|null
+     */
+    protected $modelQueries;
+
+    /**
      * @var Grid\Exporter
      */
     protected $parent;

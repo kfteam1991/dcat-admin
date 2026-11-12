@@ -300,7 +300,7 @@ class Column
      * @param  \Closure  $condition
      * @return Column\Condition
      */
-    public function if(\Closure $condition = null)
+    public function if(?\Closure $condition = null)
     {
         $condition = $condition ?: function ($column) {
             return $column->getValue();

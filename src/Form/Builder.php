@@ -217,7 +217,7 @@ class Builder implements FieldsCollection
      * @param  string  $mode
      * @return void|string
      */
-    public function mode(string $mode = null)
+    public function mode(?string $mode = null)
     {
         if ($mode === null) {
             return $this->mode;

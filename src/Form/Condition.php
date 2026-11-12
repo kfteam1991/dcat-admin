@@ -38,12 +38,12 @@ class Condition
         return $this;
     }
 
-    public function now(\Closure $next = null)
+    public function now(?\Closure $next = null)
     {
         $this->process($next);
     }
 
-    public function else(\Closure $next = null)
+    public function else(?\Closure $next = null)
     {
         $self = $this;
 
@@ -58,7 +58,7 @@ class Condition
         return $condition;
     }
 
-    public function process(\Closure $next = null)
+    public function process(?\Closure $next = null)
     {
         if ($this->done) {
             return;

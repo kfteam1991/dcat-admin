@@ -53,7 +53,7 @@ trait HasFormResponse
      * @param  Request|null  $request
      * @return string
      */
-    protected function getCurrentUrl($default = null, Request $request = null)
+    protected function getCurrentUrl($default = null, ?Request $request = null)
     {
         if ($this->currentUrl) {
             return admin_url($this->currentUrl);

@@ -449,7 +449,7 @@ trait HasFieldValidator
      * @param  string  $key
      * @return $this
      */
-    public function setClientValidationError(string $error, string $key = null)
+    public function setClientValidationError(string $error, ?string $key = null)
     {
         $key = $key ? "{$key}-" : '';
 

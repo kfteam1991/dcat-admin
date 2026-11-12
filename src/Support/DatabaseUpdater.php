@@ -20,7 +20,7 @@ class DatabaseUpdater
     /**
      * Sets up a migration or seed file.
      */
-    public function setUp($file, \Closure $callback = null)
+    public function setUp($file, ?\Closure $callback = null)
     {
         $object = $this->resolve($file);
 
@@ -50,7 +50,7 @@ class DatabaseUpdater
     /**
      * Packs down a migration or seed file.
      */
-    public function packDown($file, \Closure $callback = null)
+    public function packDown($file, ?\Closure $callback = null)
     {
         $object = $this->resolve($file);
 

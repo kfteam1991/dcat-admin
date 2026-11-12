@@ -41,7 +41,7 @@ class LazyTable extends Widget
      * @param  LazyRenderable  $renderable
      * @param  bool  $load
      */
-    public function __construct(LazyRenderable $renderable = null, bool $load = true)
+    public function __construct(?LazyRenderable $renderable = null, bool $load = true)
     {
         $this->from($renderable);
         $this->load($load);

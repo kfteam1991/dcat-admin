@@ -117,7 +117,7 @@ class Permission extends Model implements Sortable
      * @param  \Closure|null  $closure
      * @return array
      */
-    public static function selectOptions(\Closure $closure = null)
+    public static function selectOptions(?\Closure $closure = null)
     {
         $options = (new static())->withQuery($closure)->buildSelectOptions();
 

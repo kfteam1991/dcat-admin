@@ -18,6 +18,11 @@ trait CanHidesColumns
     public $hiddenColumns = [];
 
     /**
+     * @var array|null
+     */
+    protected $visibleColumnsFromQuery;
+
+    /**
      * @var ColumnSelectorStore
      */
     private $columnSelectorStorage;

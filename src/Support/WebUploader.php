@@ -19,13 +19,24 @@ class WebUploader
 {
     const FILE_NAME = '_file_';
 
+    // 显式声明属性：PHP 8.2+ 已弃用动态属性
+    public $_id;
+
+    public $chunk;
+
+    public $chunks;
+
+    public $upload_column;
+
+    public $file;
+
     public $temporaryDirectory = 'tmp';
 
     protected $temporaryFilePath;
 
     protected $completeFile;
 
-    public function __construct(Request $request = null)
+    public function __construct(?Request $request = null)
     {
         $request = $this->prepareRequest($request ?: request());
 

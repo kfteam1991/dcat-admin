@@ -393,7 +393,7 @@ class Field implements Renderable
      * @param  string  $key
      * @param  Fluent|null  $dataremoveField
      */
-    protected function callCustomFormatter($key = 'value', Fluent $data = null)
+    protected function callCustomFormatter($key = 'value', ?Fluent $data = null)
     {
         if ($this->customFormat) {
             $this->{$key} = $this->customFormat
@@ -564,7 +564,7 @@ class Field implements Renderable
      * @param  array  $data
      * @return $this|Fluent
      */
-    public function data(array $data = null)
+    public function data(?array $data = null)
     {
         if (is_null($data)) {
             if (! $this->data || is_array($this->data)) {

@@ -209,7 +209,7 @@ class Select extends Presenter
      * @param  string  $placeholder
      * @return $this|string
      */
-    public function placeholder(string $placeholder = null)
+    public function placeholder(?string $placeholder = null)
     {
         if ($placeholder === null) {
             return $this->placeholder ?: __('admin.choose');
