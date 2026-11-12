@@ -30,6 +30,8 @@ class Markdown extends Field
         'sequenceDiagram'    => false,        // 时序/序列图支持，默认关闭,
         'imageUpload'        => true,
         'autoFocus'          => true,
+        // 预览时过滤危险标签与 on* 事件属性，防止 XSS
+        'htmlDecode'         => 'style,script,iframe,object,embed,form,base,meta,link|on*',
     ];
 
     protected $language;
@@ -170,13 +172,32 @@ class Markdown extends Field
         $locale = config('app.locale');
 
         if (isset($this->defaultLangs[$locale])) {
-            Admin::js($this->defaultLangs[$locale]);
+            $this->appendLangScript($this->defaultLangs[$locale]);
 
             return;
         }
 
         if ($this->language) {
-            Admin::js($this->language);
+            $this->appendLangScript($this->language);
         }
+    }
+
+    /**
+     * 语言包依赖全局 editormd 对象，必须排在 editormd.min.js 之后加载，
+     * 因此追加到 @editor-md-form 资源别名的末尾，而不是直接输出到页面头部.
+     *
+     * @param  string  $path
+     * @return void
+     */
+    protected function appendLangScript($path)
+    {
+        $alias = Admin::asset()->getAlias('@editor-md-form');
+        $js = (array) ($alias['js'] ?? []);
+
+        if (! in_array($path, $js, true)) {
+            $js[] = $path;
+        }
+
+        Admin::asset()->alias('@editor-md-form', ['js' => $js, 'css' => (array) ($alias['css'] ?? [])]);
     }
 }

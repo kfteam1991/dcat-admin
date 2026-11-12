@@ -21,7 +21,7 @@ class Markdown extends Widget
      * @var array
      */
     protected $options = [
-        'htmlDecode'      => 'style,script,iframe',
+        'htmlDecode'      => 'style,script,iframe,object,embed,form,base,meta,link|on*',
         'emoji'           => true,
         'taskList'        => true,
         'tex'             => true,

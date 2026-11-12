@@ -142,6 +142,7 @@ class Asset
                 '@admin/dcat/plugins/editor-md/lib/flowchart.min.js',
                 '@admin/dcat/plugins/editor-md/lib/jquery.flowchart.min.js',
                 '@admin/dcat/plugins/editor-md/editormd.min.js',
+                '@admin/dcat/plugins/editor-md/editormd.safe.js',
             ],
             'css' => [
                 '@admin/dcat/plugins/editor-md/css/editormd.preview.min.css',
@@ -152,6 +153,7 @@ class Asset
             'js' => [
                 '@admin/dcat/plugins/editor-md/lib/raphael.min.js',
                 '@admin/dcat/plugins/editor-md/editormd.min.js',
+                '@admin/dcat/plugins/editor-md/editormd.safe.js',
             ],
             'css' => [
                 '@admin/dcat/plugins/editor-md/css/editormd.min.css',
