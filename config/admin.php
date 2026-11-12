@@ -168,6 +168,9 @@ return [
     */
     'grid' => [
 
+        // Upper limit for the "per_page" request parameter (DoS protection).
+        'max_per_page' => 1000,
+
         // The global Grid action display class.
         'grid_action_class' => Dcat\Admin\Grid\Displayers\DropdownActions::class,
 

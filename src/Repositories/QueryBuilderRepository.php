@@ -215,8 +215,10 @@ class QueryBuilderRepository extends Repository implements TreeRepository
     protected function resolvePerPage(Grid\Model $model, $paginate)
     {
         if ($paginate && is_array($paginate)) {
-            if ($perPage = request()->input($model->getPerPageName())) {
-                $paginate['arguments'][0] = (int) $perPage;
+            $perPage = request()->input($model->getPerPageName());
+
+            if (is_numeric($perPage) && (int) $perPage > 0) {
+                $paginate['arguments'][0] = $model->clampPerPage($perPage);
             }
 
             return $paginate['arguments'];

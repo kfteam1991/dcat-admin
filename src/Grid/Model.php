@@ -54,6 +54,13 @@ class Model
     protected $sort;
 
     /**
+     * 允许通过请求参数排序的字段.
+     *
+     * @var array
+     */
+    protected $sortableColumns = [];
+
+    /**
      * @var Collection
      */
     protected $data;
@@ -540,12 +547,32 @@ class Model
             return;
         }
 
-        $perPage = $this->request->get($this->getPerPageName()) ?: $this->perPage;
+        $perPage = $this->request->input($this->getPerPageName());
+        $perPage = is_numeric($perPage) && (int) $perPage > 0 ? $this->clampPerPage($perPage) : $this->perPage;
+
         if ($perPage) {
             return (int) $perPage;
         }
 
         return null;
+    }
+
+    /**
+     * 限制请求传入的每页条数上限，防止 per_page=99999999 拖垮数据库 / 内存.
+     * 上限取 admin.grid.max_per_page（默认 1000）与表格 perPages 选项最大值中的较大者.
+     *
+     * @param  mixed  $perPage
+     * @return int
+     */
+    public function clampPerPage($perPage)
+    {
+        $max = (int) config('admin.grid.max_per_page', 1000);
+
+        if ($this->grid && ($options = array_filter((array) $this->grid->getPerPages(), 'is_numeric'))) {
+            $max = max($max, (int) max($options));
+        }
+
+        return max(1, min((int) $perPage, max($max, (int) $this->perPage)));
     }
 
     /**
@@ -594,11 +621,71 @@ class Model
             $this->sort = $this->request->get($this->getSortName());
         }
 
-        if (empty($this->sort['column']) || empty($this->sort['type'])) {
+        if (! is_array($this->sort) || empty($this->sort['column']) || empty($this->sort['type'])) {
             return [null, null, null];
         }
 
-        return [$this->sort['column'], $this->sort['type'], $this->sort['cast'] ?? null];
+        [$column, $type, $cast] = [$this->sort['column'], $this->sort['type'], $this->sort['cast'] ?? null];
+
+        // 排序参数来自请求，且会被拼接进 orderByRaw，必须严格校验，防止 SQL 注入
+        if (! static::isValidSortColumn($column)
+            || ! is_string($type)
+            || ! in_array($type = strtolower($type), ['asc', 'desc'], true)
+            || ($cast !== null && $cast !== '' && ! static::isValidSortCast($cast))
+        ) {
+            return [null, null, null];
+        }
+
+        // 只接受通过 $grid->column()->sortable() 注册过的排序字段，
+        // 避免任意字段名导致 SQL 报错（500）或把模型方法当作关联调用
+        if ($this->sortableColumns && ! isset($this->sortableColumns[$column])) {
+            return [null, null, null];
+        }
+
+        return [$column, $type, $cast ?: null];
+    }
+
+    /**
+     * 注册允许排序的字段.
+     *
+     * @param  string  $column
+     * @return $this
+     */
+    public function addSortableColumn($column)
+    {
+        if (is_string($column) && $column !== '') {
+            $this->sortableColumns[$column] = true;
+        }
+
+        return $this;
+    }
+
+    /**
+     * 排序字段只允许：字母、数字、下划线，以 "." (关联/表名) 或 "->" (json 字段) 分隔.
+     *
+     * @param  mixed  $column
+     * @return bool
+     */
+    public static function isValidSortColumn($column)
+    {
+        return is_string($column)
+            && strlen($column) <= 255
+            && (bool) preg_match('/^[A-Za-z_][A-Za-z0-9_]*(?:(?:\.|->)[A-Za-z0-9_]+)*$/', $column);
+    }
+
+    /**
+     * 排序 CAST 类型白名单.
+     *
+     * @param  mixed  $cast
+     * @return bool
+     */
+    public static function isValidSortCast($cast)
+    {
+        return is_string($cast)
+            && (bool) preg_match(
+                '/^(?:SIGNED|UNSIGNED|SIGNED INTEGER|UNSIGNED INTEGER|INTEGER|INT|BIGINT|DATE|DATETIME|TIME|YEAR|JSON|FLOAT|DOUBLE|REAL|BINARY|CHAR|NCHAR|TEXT|NUMERIC|DECIMAL)(?:\(\d{1,3}(?:,\s*\d{1,3})?\))?$/i',
+                trim($cast)
+            );
     }
 
     /**

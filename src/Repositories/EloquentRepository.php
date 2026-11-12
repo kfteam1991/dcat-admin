@@ -211,7 +211,10 @@ class EloquentRepository extends Repository implements TreeRepository
     protected function addOrderBy(Grid\Model $model, $column, $type, $cast)
     {
         $explodedCols = explode('.', $column);
-        $isRelation = empty($explodedCols[1]) ? false : method_exists($this->model(), $explodedCols[0]);
+        // 只把模型自身定义的方法视为关联，避免通过排序参数调用 save/delete 等 Eloquent 基础方法
+        $isRelation = empty($explodedCols[1])
+            ? false
+            : (method_exists($this->model(), $explodedCols[0]) && ! method_exists(EloquentModel::class, $explodedCols[0]));
 
         if (count($explodedCols) > 1 && $isRelation) {
             $this->setRelationSort($model, $column, $type, $cast);
@@ -377,8 +380,10 @@ class EloquentRepository extends Repository implements TreeRepository
     protected function resolvePerPage(Grid\Model $model, $paginate)
     {
         if ($paginate && is_array($paginate)) {
-            if ($perPage = request()->input($model->getPerPageName())) {
-                $paginate['arguments'][0] = (int) $perPage;
+            $perPage = request()->input($model->getPerPageName());
+
+            if (is_numeric($perPage) && (int) $perPage > 0) {
+                $paginate['arguments'][0] = $model->clampPerPage($perPage);
             }
 
             return $paginate['arguments'];
