@@ -16,7 +16,7 @@
 
         <div class="dropdown-divider"></div>
 
-        <a class="dropdown-item" href="{{ admin_url('auth/logout') }}">
+        <a class="dropdown-item" href="{{ admin_url('auth/logout') }}?_token={{ csrf_token() }}">
             <i class="feather icon-power"></i> {{ trans('admin.logout') }}
         </a>
     </div>

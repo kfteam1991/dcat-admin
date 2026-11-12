@@ -4,6 +4,7 @@ namespace Dcat\Admin\Traits;
 
 use Dcat\Admin\Admin;
 use Dcat\Admin\Http\JsonResponse;
+use Dcat\Admin\Support\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Support\MessageBag;
 
@@ -62,7 +63,9 @@ trait HasFormResponse
         /* @var Request $request */
         $request = $request ?: (empty($this->request) ? request() : $this->request);
 
-        if ($current = $request->get(static::CURRENT_URL_NAME)) {
+        $currentUrlName = defined(static::class.'::CURRENT_URL_NAME') ? static::CURRENT_URL_NAME : '_current_';
+
+        if (($current = $request->input($currentUrlName)) && Helper::isSafeRedirectUrl($current)) {
             return admin_url($current);
         }
 

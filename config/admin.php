@@ -151,6 +151,9 @@ return [
         // Add "remember me" to login form
         'remember' => true,
 
+        // Login brute-force protection: [max failed attempts, lockout seconds]. Set false to disable.
+        'throttle' => [5, 60],
+
         // All method to path like: auth/users/*/edit
         // or specific method to path like: get:auth/users.
         'except' => [

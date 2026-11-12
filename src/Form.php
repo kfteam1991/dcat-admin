@@ -950,7 +950,10 @@ class Form implements Renderable
             return rtrim($resourcesPath, '/')."/{$key}";
         }
 
-        return $this->request->get(Builder::PREVIOUS_URL_KEY) ?: $this->getCurrentUrl($resourcesPath);
+        // _previous_ 来自表单隐藏域（初始值取自 Referer），只允许站内地址，防止开放重定向 / javascript: XSS
+        $previous = $this->request->input(Builder::PREVIOUS_URL_KEY);
+
+        return Helper::isSafeRedirectUrl($previous) ? $previous : $this->getCurrentUrl($resourcesPath);
     }
 
     /**

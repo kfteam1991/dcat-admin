@@ -6,13 +6,16 @@ use Dcat\Admin\Admin;
 use Dcat\Admin\Form;
 use Dcat\Admin\Http\Repositories\Administrator;
 use Dcat\Admin\Layout\Content;
+use Dcat\Admin\Support\Helper;
 use Dcat\Admin\Traits\HasFormResponse;
 use Illuminate\Auth\GuardHelpers;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -55,16 +58,36 @@ class AuthController extends Controller
 
         /** @var \Illuminate\Validation\Validator $validator */
         $validator = Validator::make($credentials, [
-            $this->username()   => 'required',
-            'password'          => 'required',
+            $this->username()   => 'required|string|max:255',
+            'password'          => 'required|string|max:1024',
         ]);
 
         if ($validator->fails()) {
             return $this->validationErrorsResponse($validator);
         }
 
+        // 登录失败次数限制，防止暴力破解
+        $throttleKey = $this->throttleKey($request);
+        [$maxAttempts, $decaySeconds] = $this->loginThrottle();
+
+        if ($maxAttempts > 0 && $this->limiter()->tooManyAttempts($throttleKey, $maxAttempts)) {
+            $seconds = $this->limiter()->availableIn($throttleKey);
+
+            return $this->validationErrorsResponse([
+                $this->username() => Lang::has('auth.throttle')
+                    ? trans('auth.throttle', ['seconds' => $seconds, 'minutes' => ceil($seconds / 60)])
+                    : "Too many login attempts. Please try again in {$seconds} seconds.",
+            ]);
+        }
+
         if ($this->guard()->attempt($credentials, $remember)) {
+            $this->limiter()->clear($throttleKey);
+
             return $this->sendLoginResponse($request);
+        }
+
+        if ($maxAttempts > 0) {
+            $this->limiter()->hit($throttleKey, $decaySeconds);
         }
 
         return $this->validationErrorsResponse([
@@ -79,13 +102,18 @@ class AuthController extends Controller
      */
     public function getLogout(Request $request)
     {
+        // 防止 CSRF 强制登出：必须携带有效的 _token，否则展示一个需要手动确认的 POST 表单
+        if (! $this->hasValidLogoutToken($request)) {
+            return response($this->logoutConfirmationHtml());
+        }
+
         $this->guard()->logout();
 
         $request->session()->invalidate();
 
         $path = admin_url('auth/login');
         if ($request->pjax()) {
-            return "<script>location.href = '$path';</script>";
+            return '<script>location.href = '.Helper::jsString($path).';</script>';
         }
 
         return redirect($path);
@@ -245,6 +273,77 @@ class AuthController extends Controller
             ->locationToIntended($path)
             ->locationIf(Admin::app()->getEnabledApps(), $path)
             ->send();
+    }
+
+    /**
+     * @param  Request  $request
+     * @return bool
+     */
+    protected function hasValidLogoutToken(Request $request)
+    {
+        $token = $request->input('_token') ?: $request->header('X-CSRF-TOKEN');
+        $sessionToken = $request->hasSession() ? $request->session()->token() : null;
+
+        return is_string($token) && is_string($sessionToken) && $sessionToken !== '' && hash_equals($sessionToken, $token);
+    }
+
+    /**
+     * @return string
+     */
+    protected function logoutConfirmationHtml()
+    {
+        $action = e(admin_url('auth/logout'));
+        $token = e(csrf_token());
+        $label = e(trans('admin.logout'));
+        $back = e(admin_url('/'));
+        $cancel = e(trans('admin.cancel'));
+
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{$label}</title></head>
+<body style="font-family:sans-serif;text-align:center;padding-top:15vh">
+<form method="post" action="{$action}">
+    <input type="hidden" name="_token" value="{$token}">
+    <button type="submit" style="padding:10px 28px;font-size:16px;cursor:pointer">{$label}</button>
+    <a href="{$back}" style="margin-left:16px">{$cancel}</a>
+</form>
+</body>
+</html>
+HTML;
+    }
+
+    /**
+     * @return \Illuminate\Cache\RateLimiter
+     */
+    protected function limiter()
+    {
+        return app(RateLimiter::class);
+    }
+
+    /**
+     * 登录限流配置：admin.auth.throttle = [最大失败次数, 锁定秒数]，设为 false 关闭.
+     *
+     * @return array
+     */
+    protected function loginThrottle()
+    {
+        $config = config('admin.auth.throttle', [5, 60]);
+
+        if (! $config) {
+            return [0, 0];
+        }
+
+        return [(int) ($config[0] ?? 5), (int) ($config[1] ?? 60)];
+    }
+
+    /**
+     * @param  Request  $request
+     * @return string
+     */
+    protected function throttleKey(Request $request)
+    {
+        return 'dcat-admin-login|'.Str::lower((string) $request->input($this->username())).'|'.$request->ip();
     }
 
     /**

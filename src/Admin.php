@@ -598,6 +598,7 @@ class Admin
                 $router->get('auth/login', $authController.'@getLogin');
                 $router->post('auth/login', $authController.'@postLogin');
                 $router->get('auth/logout', $authController.'@getLogout');
+                $router->post('auth/logout', $authController.'@getLogout');
                 $router->get('auth/setting', $authController.'@getSetting');
                 $router->put('auth/setting', $authController.'@putSetting');
             });
