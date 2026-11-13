@@ -449,6 +449,35 @@ trait UploadField
     }
 
     /**
+     * 判断请求传入的文件路径是否允许被当前字段删除（防止目录穿越或越权删除其他目录文件）.
+     *
+     * @param  mixed  $path
+     * @return bool
+     */
+    public function isDeletablePath($path)
+    {
+        if (! is_string($path) || $path === '') {
+            return false;
+        }
+
+        $prefix = $this->getStorage()->url('');
+
+        if ($prefix && strpos($path, $prefix) === 0) {
+            $path = substr($path, strlen($prefix));
+        }
+
+        $path = ltrim(str_replace('\\', '/', $path), '/');
+
+        if (! Helper::isSafeStoragePath($path)) {
+            return false;
+        }
+
+        $directory = trim(str_replace('\\', '/', (string) $this->getDirectory()), '/');
+
+        return $directory === '' || strpos($path, $directory.'/') === 0;
+    }
+
+    /**
      * Destroy files.
      *
      * @param  string|array  $path

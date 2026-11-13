@@ -89,7 +89,7 @@ class HandleFormController
 
         // 只允许删除该字段上传目录下的文件，防止任意文件删除
         foreach ($paths as $path) {
-            if (! $this->isDeletablePath($field, $path)) {
+            if (! $field->isDeletablePath($path)) {
                 return $this->responseErrorMessage('Invalid file path.');
             }
         }
@@ -97,30 +97,6 @@ class HandleFormController
         $field->deleteFile($paths);
 
         return $this->responseDeleted();
-    }
-
-    /**
-     * @param  File  $field
-     * @param  string  $path
-     * @return bool
-     */
-    protected function isDeletablePath(File $field, string $path)
-    {
-        $prefix = $field->getStorage()->url('');
-
-        if ($prefix && strpos($path, $prefix) === 0) {
-            $path = substr($path, strlen($prefix));
-        }
-
-        $path = ltrim(str_replace('\\', '/', $path), '/');
-
-        if (! Helper::isSafeStoragePath($path)) {
-            return false;
-        }
-
-        $directory = trim(str_replace('\\', '/', (string) $field->getDirectory()), '/');
-
-        return $directory === '' || strpos($path, $directory.'/') === 0;
     }
 
     /**

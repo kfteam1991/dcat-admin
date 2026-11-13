@@ -637,8 +637,8 @@ class Model
         }
 
         // 只接受通过 $grid->column()->sortable() 注册过的排序字段，
-        // 避免任意字段名导致 SQL 报错（500）或把模型方法当作关联调用
-        if ($this->sortableColumns && ! isset($this->sortableColumns[$column])) {
+        // 避免任意字段名导致 SQL 报错（500）或把模型方法当作关联调用；未注册任何排序列时同样拒绝
+        if (! isset($this->sortableColumns[$column])) {
             return [null, null, null];
         }
 

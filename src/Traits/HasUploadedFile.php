@@ -62,8 +62,13 @@ trait HasUploadedFile
     public function deleteFile($disk = null, $path = null)
     {
         $disk = $disk ?: $this->disk();
+        $target = $path ?: request()->input('key');
 
-        return $disk->delete($path ?: request()->key);
+        if (! is_string($target) || ! Helper::isSafeStoragePath(ltrim(str_replace('\\', '/', $target), '/'))) {
+            return false;
+        }
+
+        return $disk->delete($target);
     }
 
     /**

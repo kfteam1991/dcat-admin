@@ -28,7 +28,7 @@ trait HasFiles
         $column = $data['upload_column'] ?? null;
         $file = app('admin.web-uploader')->getUploadedFile() ?: ($data[WebUploader::FILE_NAME] ?? null);
 
-        if (! $column || ! $file instanceof UploadedFile) {
+        if (!$column || !$file instanceof UploadedFile) {
             return;
         }
 
@@ -89,7 +89,7 @@ trait HasFiles
      */
     protected function deleteFileWhenCreating(array $input)
     {
-        if (! array_key_exists(Field::FILE_DELETE_FLAG, $input)) {
+        if (!array_key_exists(Field::FILE_DELETE_FLAG, $input)) {
             return;
         }
 
@@ -97,7 +97,7 @@ trait HasFiles
         $filePath = $input['key'] ?? null;
         $relation = $input['_relation'] ?? null;
 
-        if (! $column && ! $filePath) {
+        if (!$column && !$filePath) {
             return;
         }
 
@@ -108,6 +108,21 @@ trait HasFiles
         }
 
         if ($field && $field instanceof UploadFieldInterface) {
+            // 只允许删除该字段上传目录下的文件，防止创建表单时越权删除任意文件
+            $paths = array_filter((array) $filePath, 'is_string');
+
+            if (empty($paths)) {
+                return $this->response()->status(false)->message('Invalid file path.')->send();
+            }
+
+            if (method_exists($field, 'isDeletablePath')) {
+                foreach ($paths as $path) {
+                    if (!$field->isDeletablePath($path)) {
+                        return $this->response()->status(false)->message('Invalid file path.')->send();
+                    }
+                }
+            }
+
             $this->deleteFile($field, $filePath);
 
             return $this
@@ -128,7 +143,7 @@ trait HasFiles
         if ($input) {
             if (
                 is_string($input)
-                || (is_array($input) && ! Arr::isAssoc($input))
+                || (is_array($input) && !Arr::isAssoc($input))
             ) {
                 $input = [$field->column() => $input];
             }
@@ -175,7 +190,7 @@ trait HasFiles
     public function deleteFiles($input, $forceDelete = false)
     {
         // If it's a soft delete, the files in the data will not be deleted.
-        if (! $forceDelete && $this->isSoftDeletes) {
+        if (!$forceDelete && $this->isSoftDeletes) {
             return;
         }
 
@@ -195,13 +210,13 @@ trait HasFiles
      */
     protected function handleFileDelete(array $input = [])
     {
-        if (! array_key_exists(Field::FILE_DELETE_FLAG, $input)) {
+        if (!array_key_exists(Field::FILE_DELETE_FLAG, $input)) {
             return $input;
         }
 
         $input[Field::FILE_DELETE_FLAG] = $input['key'];
 
-        if (! empty($input['_column'])) {
+        if (!empty($input['_column'])) {
             if (empty($input['_relation'])) {
                 $input[$input['_column']] = '';
             } else {
@@ -210,8 +225,8 @@ trait HasFiles
 
                 $input[$relation] = [
                     $relationKey => [
-                        $keyName                     => $relationKey,
-                        $input['_column']            => '',
+                        $keyName => $relationKey,
+                        $input['_column'] => '',
                         NestedForm::REMOVE_FLAG_NAME => null,
                     ],
                 ];

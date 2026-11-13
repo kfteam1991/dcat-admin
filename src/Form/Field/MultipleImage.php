@@ -47,7 +47,9 @@ class MultipleImage extends Image
     protected function prepareInputValue($file)
     {
         if ($path = request(static::FILE_DELETE_FLAG)) {
-            $this->deleteFile($path);
+            if ($this->isDeletablePath($path)) {
+                $this->deleteFile($path);
+            }
 
             return array_values(array_diff($this->original, [$path]));
         }
